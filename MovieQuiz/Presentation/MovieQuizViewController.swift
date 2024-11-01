@@ -166,7 +166,7 @@ final class MovieQuizViewController: UIViewController {
         }
         previewImage.layer.masksToBounds = true
         previewImage.layer.borderWidth = 8
-        previewImage.layer.borderColor = isCorrect ? UIColor.ypRed.cgColor : UIColor.ypGreen.cgColor
+        previewImage.layer.borderColor = isCorrect ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             self.showNextQuestionOrResults()
@@ -182,14 +182,14 @@ final class MovieQuizViewController: UIViewController {
     
     // MARK: - Реализация кнопок
     
-    @IBAction private func noButtonClicked(_ sender: UIButton) {
-        let currentQuestion = questions[currentQuestionIndex]
-        let givenAnswer = true
-        
-        showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
-    }
-    
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
+            let currentQuestion = questions[currentQuestionIndex]
+            let givenAnswer = true
+            
+            showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+        }
+        
+    @IBAction private func noButtonClicked(_ sender: UIButton) {
         let currentQuestion = questions[currentQuestionIndex]
         let givenAnswer = false
         
