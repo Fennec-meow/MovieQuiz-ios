@@ -9,8 +9,8 @@ import Foundation
 
 // MARK: - Структуру вопроса
 
- struct QuizQuestion {
-    let image: String
+struct QuizQuestion {
+    let image: Data
     let text: String
     let correctAnswer: Bool
 }

@@ -14,10 +14,13 @@ private struct Fonts {
 }
 
 public func printSystemFonts() {
-    // идентификатор для фильтрации системных шрифтов в журналах.
+    
+    // MARK: - Идентификатор для фильтрации системных шрифтов в журналах
     let identifier: String = "[SYSTEM FONTS]"
-    // функциональность, которая печатает все системные шрифты
+    
+    // MARK: - Функциональность, которая печатает все системные шрифты
     for family in UIFont.familyNames as [String] {
+        
         debugPrint("\(identifier) FONT FAMILY :  \(family)")
         for name in UIFont.fontNames(forFamilyName: family) {
             debugPrint("\(identifier) FONT NAME :  \(name)")

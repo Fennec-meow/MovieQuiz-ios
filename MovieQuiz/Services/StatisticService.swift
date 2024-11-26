@@ -7,7 +7,8 @@
 
 import Foundation
 
-// Расширяем при объявлении
+// MARK: - Расширяем при объявлении
+
 final class StatisticService: StatisticServiceProtocol {
     private let storage: UserDefaults = .standard
     
@@ -40,7 +41,6 @@ final class StatisticService: StatisticServiceProtocol {
             storage.set(newValue.date,forKey: Keys.bestGameDate.rawValue)
         }
     }
-    
     
     private enum Keys: String {
         case totalCorrect = "totalCorrect"
