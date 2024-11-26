@@ -42,8 +42,8 @@
                                             <constraint firstAttribute="width" secondItem="bX9-Vh-smT" secondAttribute="height" multiplier="2:3" id="cm9-9u-0jd"/>
                                         </constraints>
                                     </imageView>
-                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="k6l-bE-cK0">
-                                        <rect key="frame" x="187" y="420.5" width="0.0" height="303.5"/>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="k6l-bE-cK0">
+                                        <rect key="frame" x="166" y="420.5" width="42" height="303.5"/>
                                         <fontDescription key="fontDescription" name="HelveticaNeue" family="Helvetica Neue" pointSize="17"/>
                                         <nil key="textColor"/>
                                         <nil key="highlightedColor"/>
@@ -82,23 +82,17 @@
                                     </stackView>
                                 </subviews>
                             </stackView>
-                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="medium" translatesAutoresizingMaskIntoConstraints="NO" id="0sn-lw-lzx">
-                                <rect key="frame" x="197" y="438" width="20" height="20"/>
-                            </activityIndicatorView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
-                            <constraint firstItem="0sn-lw-lzx" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="2NE-ug-svm"/>
                             <constraint firstItem="wyS-BC-SdZ" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="10" id="Cig-ug-1j4"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="wyS-BC-SdZ" secondAttribute="bottom" id="EW6-5Q-1KV"/>
                             <constraint firstItem="wyS-BC-SdZ" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="20" id="IWF-ty-GRk"/>
-                            <constraint firstItem="0sn-lw-lzx" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" id="MQy-SD-kKi"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="wyS-BC-SdZ" secondAttribute="trailing" constant="20" id="jKy-AF-lR3"/>
                         </constraints>
                     </view>
                     <connections>
-                        <outlet property="activityIndicator" destination="0sn-lw-lzx" id="47M-qv-DVe"/>
                         <outlet property="indexLabel" destination="KS2-qL-240" id="IuX-dD-0w5"/>
                         <outlet property="noButton" destination="Tfg-pi-BCb" id="Rn6-mF-K5i"/>
                         <outlet property="previewImage" destination="bX9-Vh-smT" id="8Mn-eE-dmQ"/>

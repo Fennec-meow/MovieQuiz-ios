@@ -18,18 +18,18 @@ final class AlertPresenter {
     
     // MARK: - Показа результатов раунда квиза
     
-     func showAlert(alert alertMobel: AlertModel) {
+    func showAlert(alert alertMobel: AlertModel) {
         let alert = UIAlertController(
             title: alertMobel.title,
             message: alertMobel.message,
             preferredStyle: .alert)
         
-         let action = UIAlertAction(title: alertMobel.buttonText, style: .default) { _ in
-             alertMobel.completion()
-         }
-         alert.addAction(action)
-
-    delegate?.present(alert, animated: true)
+        let action = UIAlertAction(title: alertMobel.buttonText, style: .default) { _ in
+            alertMobel.completion()
         }
+        alert.addAction(action)
+        
+        delegate?.present(alert, animated: true)
     }
+}
 
