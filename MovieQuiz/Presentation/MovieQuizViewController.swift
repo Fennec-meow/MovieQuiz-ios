@@ -14,40 +14,47 @@ class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     // MARK: - Переменная с индексом и с счётчиком правильных ответов
     
-    private var currentQuestionIndex: Int = .zero
     private var correctAnswers: Int = .zero
-    private let questionsAmount: Int = 10
     
     private var currentQuestion: QuizQuestion?
     private var questionFactory: QuestionFactoryProtocol?
-    private var alertPresenter: AlertPresenter = AlertPresenter()
-    private var statisticService: StatisticServiceProtocol = StatisticService()
+    private var statisticService: StatisticService?
+    
+    private let presenter = MovieQuizPresenter()
+    
+    private var alertPresenter = AlertPresenter()
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         printSystemFonts()
         view.backgroundColor = .ypBlack
+        
         questionTitleLabel.text = "Вопрос:"
         questionTitleLabel.textColor = .ypWhite
         questionTitleLabel.font = UIFont(name: "YSDisplay-Medium", size: 20.0)
+        
         indexLabel.text = "1/10"
         indexLabel.textColor = .ypWhite
         indexLabel.font = UIFont(name: "YSDisplay-Medium", size: 20.0)
+        
         previewImage.layer.borderColor = UIColor.clear.cgColor
         previewImage.backgroundColor = .ypWhite
         previewImage.layer.masksToBounds = true
         previewImage.contentMode = .scaleAspectFill
         previewImage.layer.cornerRadius = 20
         previewImage.layer.borderWidth = 8
+        
         questionLabel.numberOfLines = 2
         questionLabel.textColor = .ypWhite
         questionLabel.font = UIFont(name: "YSDisplay-Bold", size: 23.0)
+       
         noButton.setTitle("Нет", for: .normal)
         noButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20.0)
         noButton.layer.cornerRadius = 15
         noButton.backgroundColor = .ypWhite
         noButton.tintColor = .ypBlack
+        
         yesButton.setTitle("Да", for: .normal)
         yesButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20.0)
         yesButton.layer.cornerRadius = 15
@@ -55,15 +62,12 @@ class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         yesButton.tintColor = .ypBlack
         
         questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+        questionFactory?.loadData()
         
-        let alertPresenter = AlertPresenter()
-        alertPresenter.setup(delegate: self)
-        self.alertPresenter = alertPresenter
-        
-        statisticService = StatisticService()
+        statisticService = StatisticServiceImplementation()
         showLoadingIndicator()
         
-        questionFactory?.loadData()
+        presenter.viewController = self
     }
     
     // MARK: - QuestionFactoryDelegate
@@ -74,31 +78,11 @@ class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         }
         
         currentQuestion = question
-        let viewModel = convert(model: question)
+        let viewModel = presenter.convert(model: question)
         
         DispatchQueue.main.async { [weak self] in
             self?.show(quiz: viewModel)
         }
-    }
-    
-    // MARK: - Реализация кнопок
-    
-    @IBAction private func yesButtonClicked(_ sender: UIButton) {
-        guard let currentQuestion = currentQuestion else { return }
-        
-        let givenAnswer = true
-        let correctAnswer = currentQuestion.correctAnswer
-        
-        showAnswerResult(isCorrect: givenAnswer == correctAnswer)
-    }
-    
-    @IBAction private func noButtonClicked(_ sender: UIButton) {
-        guard let currentQuestion = currentQuestion else { return }
-        
-        let givenAnswer = false
-        let correctAnswer = currentQuestion.correctAnswer
-        
-        showAnswerResult(isCorrect: givenAnswer == correctAnswer)
     }
     
     // MARK: - Скрываем индикатор загрузки
@@ -114,13 +98,16 @@ class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         showNetworkError(message: error.localizedDescription)
     }
     
-    // MARK: - Приватный метод конвертации
+    // MARK: - Реализация кнопок
     
-    private func convert(model: QuizQuestion) -> QuizStepViewModel {
-        return QuizStepViewModel(
-            image: UIImage(data: model.image) ?? UIImage(),
-            question: model.text,
-            questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
+    @IBAction private func yesButtonClicked(_ sender: UIButton) {
+        presenter.currentQuestion = currentQuestion
+        presenter.yesButtonClicked()
+    }
+    
+    @IBAction private func noButtonClicked(_ sender: UIButton) {
+        presenter.currentQuestion = currentQuestion
+        presenter.noButtonClicked()
     }
     
     // MARK: - Приватный метод вывода на экран вопроса
@@ -135,20 +122,20 @@ class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     }
     
     private func show(quiz result: QuizResultsViewModel) {
-        let alert = AlertModel(title: result.title, message: result.text, buttonText: result.buttonText) { [weak self] in
+        let action = UIAlertAction(title: result.buttonText, style: .default) { [weak self] _ in
             guard let self = self else { return }
-            self.currentQuestionIndex = .zero
+            
+            self.presenter.resetQuestionIndex()
             self.correctAnswers = .zero
             
-            questionFactory?.requestNextQuestion()
+            self.questionFactory?.requestNextQuestion()
             
         }
-        alertPresenter.showAlert(alert: alert)
     }
     
     // MARK: - Меняет цвет рамки
     
-    private func showAnswerResult(isCorrect: Bool) {
+    func showAnswerResult(isCorrect: Bool) {
         
         yesButton.isEnabled = false
         noButton.isEnabled = false
@@ -183,7 +170,7 @@ class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             buttonText: "Попробовать еще раз") { [weak self] in
                 guard let self = self else { return }
                 
-                self.currentQuestionIndex = 0
+                self.presenter.resetQuestionIndex()
                 self.correctAnswers = 0
                 
                 self.questionFactory?.requestNextQuestion()
@@ -201,12 +188,12 @@ class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     private func showNextQuestionOrResults() {
         previewImage.layer.borderWidth = .zero
-        if currentQuestionIndex == questionsAmount - 1 {
-            statisticService.store(correct: correctAnswers, total: questionsAmount)
+        if let statisticService = statisticService {
+            statisticService.store(correct: correctAnswers, total: presenter.questionsAmount)
             let message: String = """
-    Ваш результат: \(correctAnswers)/\(questionsAmount)
-    Колличество сыгранных квизов: \(statisticService.gamesCount)
-    Рекорд: \(statisticService.bestGame.correct)/10 \(dateConverterMoscow(date: statisticService.bestGame.date))
+    Ваш результат: \(correctAnswers)\\\(presenter.questionsAmount)
+    Колличество сыгранных квизов: \(String(describing: statisticService.gamesCount))
+    Рекорд: \(String(describing: statisticService.bestGame.correct))/10 \(dateConverterMoscow(date: (statisticService.bestGame.date)))
     Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy))%
 """
             
@@ -217,7 +204,7 @@ class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             show(quiz: viewModel)
             
         } else {
-            currentQuestionIndex += 1
+            correctAnswers += 1
             
             questionFactory?.requestNextQuestion()
         }
@@ -236,7 +223,6 @@ class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         previewImage.layer.borderColor = UIColor.clear.cgColor
     }
     
-    
     // MARK: - Блокирует кнопки после нажатия
     
     private func changeStateButton(isEnabled: Bool) {
@@ -244,59 +230,3 @@ class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         yesButton.isEnabled = isEnabled
     }
 }
-
-// MARK: - Mock-данные
-
-/*
- 
- Картинка: The Godfather
- Настоящий рейтинг: 9,2
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- Картинка: The Dark Knight
- Настоящий рейтинг: 9
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- Картинка: Kill Bill
- Настоящий рейтинг: 8,1
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- Картинка: The Avengers
- Настоящий рейтинг: 8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- Картинка: Deadpool
- Настоящий рейтинг: 8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- Картинка: The Green Knight
- Настоящий рейтинг: 6,6
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
- 
- Картинка: Old
- Настоящий рейтинг: 5,8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
- 
- Картинка: The Ice Age Adventures of Buck Wild
- Настоящий рейтинг: 4,3
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
- 
- Картинка: Tesla
- Настоящий рейтинг: 5,1
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
- 
- Картинка: Vivarium
- Настоящий рейтинг: 5,8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
- 
- */

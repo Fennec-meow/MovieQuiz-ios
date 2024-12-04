@@ -10,10 +10,12 @@ import Foundation
 class QuestionFactory: QuestionFactoryProtocol {
     
     private let moviesLoader: MoviesLoading
+    
     private weak var delegate: QuestionFactoryDelegate?
+    
     private var movies: [MostPopularMovie] = []
     
-    init(moviesLoader: MoviesLoading, delegate: QuestionFactoryDelegate?) {
+    init(moviesLoader: MoviesLoading, delegate: QuestionFactoryDelegate) {
         self.moviesLoader = moviesLoader
         self.delegate = delegate
     }
@@ -36,17 +38,19 @@ class QuestionFactory: QuestionFactoryProtocol {
     func requestNextQuestion() {
         DispatchQueue.global().async { [weak self] in
             guard let self = self else { return }
-            //            let index = (0..<self.movies.count).randomElement() ?? 0
-            //            
-            //            guard index < self.movies.count else { return }
-            //            let movie = self.movies[index]
             
-            let movie = self.movies.randomElement()
+            let index = (0..<self.movies.count).randomElement() ?? 0
+//            let movie = self.movies[index]
+            
+            guard index < self.movies.count else { return }
+            
+            
+                        let movie = self.movies.randomElement()
             
             var imageData = Data()
             
             do {
-                imageData = try Data(contentsOf: movie!.resizedImageURL)
+                imageData = try Data(contentsOf: movie!.imageURL)
             } catch {
                 print("Failed to load image")
             }
@@ -67,7 +71,7 @@ class QuestionFactory: QuestionFactoryProtocol {
             }
         }
     }
-    
+}
     
     
     
@@ -82,7 +86,7 @@ class QuestionFactory: QuestionFactoryProtocol {
     //    }
     
     
-}
+
 
 //    private var questions: [QuizQuestion] = [
 //        QuizQuestion(

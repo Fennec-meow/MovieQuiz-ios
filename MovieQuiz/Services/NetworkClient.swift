@@ -9,15 +9,19 @@ import Foundation
 
 // MARK: - Отвечает за загрузку данных по URL
 
-struct NetworkClient {
+protocol NetworkRouting {
+    func fetch(url: URL, handler: @escaping (Result<Data, Error>) -> Void)
+}
+
+struct NetworkClient: NetworkRouting {
     
     private enum NetworkError: Error {
         case codeError
     }
-    
+
     func fetch(url: URL, handler: @escaping (Result<Data, Error>) -> Void) {
         let request = URLRequest(url: url)
-        
+
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             
             // MARK: - Проверяем, пришла ли ошибка
@@ -28,7 +32,7 @@ struct NetworkClient {
             
             // MARK: - Проверяем, что нам пришёл успешный код ответа
             if let response = response as? HTTPURLResponse,
-               response.statusCode < 200 || response.statusCode >= 300 {
+                response.statusCode < 200 && response.statusCode >= 300 {
                 handler(.failure(NetworkError.codeError))
                 return
             }
@@ -37,7 +41,7 @@ struct NetworkClient {
             guard let data = data else { return }
             handler(.success(data))
         }
-        
+
         task.resume()
     }
 }
