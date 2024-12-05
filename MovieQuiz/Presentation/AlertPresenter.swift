@@ -32,4 +32,3 @@ final class AlertPresenter {
         delegate?.present(alert, animated: true)
     }
 }
-

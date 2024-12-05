@@ -1,6 +1,6 @@
 import UIKit
 
-class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
+final class MovieQuizViewController: UIViewController, MovieQuizViewControllerProtocol {
     
     @IBOutlet private weak var questionTitleLabel: UILabel!
     @IBOutlet private weak var indexLabel: UILabel!
@@ -12,17 +12,7 @@ class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     @IBOutlet private weak var noButton: UIButton!
     @IBOutlet private weak var yesButton: UIButton!
     
-    // MARK: - Переменная с индексом и с счётчиком правильных ответов
-    
-    private var correctAnswers: Int = .zero
-    
-    private var currentQuestion: QuizQuestion?
-    private var questionFactory: QuestionFactoryProtocol?
-    private var statisticService: StatisticService?
-    
-    private let presenter = MovieQuizPresenter()
-    
-    private var alertPresenter = AlertPresenter()
+    private var presenter: MovieQuizPresenter!
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -48,7 +38,7 @@ class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         questionLabel.numberOfLines = 2
         questionLabel.textColor = .ypWhite
         questionLabel.font = UIFont(name: "YSDisplay-Bold", size: 23.0)
-       
+        
         noButton.setTitle("Нет", for: .normal)
         noButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20.0)
         noButton.layer.cornerRadius = 15
@@ -61,122 +51,59 @@ class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         yesButton.backgroundColor = .ypWhite
         yesButton.tintColor = .ypBlack
         
-        questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
-        questionFactory?.loadData()
+        presenter = MovieQuizPresenter(viewController: self)
         
-        statisticService = StatisticServiceImplementation()
-        showLoadingIndicator()
-        
-        presenter.viewController = self
-    }
-    
-    // MARK: - QuestionFactoryDelegate
-    
-    func didReceiveNextQuestion(question: QuizQuestion?) {
-        guard let question = question else {
-            return
-        }
-        
-        currentQuestion = question
-        let viewModel = presenter.convert(model: question)
-        
-        DispatchQueue.main.async { [weak self] in
-            self?.show(quiz: viewModel)
-        }
-    }
-    
-    // MARK: - Скрываем индикатор загрузки
-    
-    func didLoadDataFromServer() {
-        activityIndicator.isHidden = true
-        questionFactory?.requestNextQuestion()
-    }
-    
-    // MARK: - Возьмём в качестве сообщения описание ошибки
-    
-    func didFailToLoadData(with error: Error) {
-        showNetworkError(message: error.localizedDescription)
     }
     
     // MARK: - Реализация кнопок
     
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
-        presenter.currentQuestion = currentQuestion
         presenter.yesButtonClicked()
     }
     
     @IBAction private func noButtonClicked(_ sender: UIButton) {
-        presenter.currentQuestion = currentQuestion
         presenter.noButtonClicked()
     }
     
     // MARK: - Приватный метод вывода на экран вопроса
     
-    private func show(quiz step: QuizStepViewModel) {
-        yesButton.isEnabled = true
-        noButton.isEnabled = true
-        
+    func show(quiz step: QuizStepViewModel) {
+        previewImage.layer.borderColor = UIColor.clear.cgColor
         previewImage.image = step.image
         questionLabel.text = step.question
         indexLabel.text = step.questionNumber
     }
     
-    private func show(quiz result: QuizResultsViewModel) {
+    func show(quiz result: QuizResultsViewModel) {
+        let message = presenter.makeResultsMessage()
+        
+        let alert = UIAlertController(
+            title: result.title,
+            message: message,
+            preferredStyle: .alert)
+        
         let action = UIAlertAction(title: result.buttonText, style: .default) { [weak self] _ in
             guard let self = self else { return }
             
-            self.presenter.resetQuestionIndex()
-            self.correctAnswers = .zero
-            
-            self.questionFactory?.requestNextQuestion()
-            
+            self.presenter.restartGame()
         }
+        
+        alert.addAction(action)
+        
+        self.present(alert, animated: true, completion: nil)
     }
     
-    // MARK: - Меняет цвет рамки
-    
-    func showAnswerResult(isCorrect: Bool) {
-        
-        yesButton.isEnabled = false
-        noButton.isEnabled = false
-        
-        let color: UIColor = isCorrect ? .ypGreen : .ypRed
-        correctAnswers += isCorrect ? 1 : 0
-        
+    func highlightImageBorder(isCorrectAnswer: Bool) {
         previewImage.layer.masksToBounds = true
         previewImage.layer.borderWidth = 8
-        previewImage.layer.borderColor = color.cgColor
-        previewImage.layer.cornerRadius = 20
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            guard let self = self else { return }
-            self.showNextQuestionOrResults()
-        }
+        previewImage.layer.borderColor = isCorrectAnswer ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
     }
     
     // MARK: - Содержит логику индикатора загрузки
     
-    private func showLoadingIndicator() {
+    func showLoadingIndicator() {
         activityIndicator.isHidden = false // говорим, что индикатор загрузки не скрыт
         activityIndicator.startAnimating() // включаем анимацию
-    }
-    
-    private func showNetworkError(message: String) {
-        hideLoadingIndicator()
-        
-        let model = AlertModel(
-            title: "Ошибка",
-            message: message,
-            buttonText: "Попробовать еще раз") { [weak self] in
-                guard let self = self else { return }
-                
-                self.presenter.resetQuestionIndex()
-                self.correctAnswers = 0
-                
-                self.questionFactory?.requestNextQuestion()
-            }
-        
-        alertPresenter.showAlert(alert: model)
     }
     
     func hideLoadingIndicator() {
@@ -184,49 +111,134 @@ class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         
     }
     
-    // MARK: - Содержит логику перехода в один из сценариев
-    
-    private func showNextQuestionOrResults() {
-        previewImage.layer.borderWidth = .zero
-        if let statisticService = statisticService {
-            statisticService.store(correct: correctAnswers, total: presenter.questionsAmount)
-            let message: String = """
-    Ваш результат: \(correctAnswers)\\\(presenter.questionsAmount)
-    Колличество сыгранных квизов: \(String(describing: statisticService.gamesCount))
-    Рекорд: \(String(describing: statisticService.bestGame.correct))/10 \(dateConverterMoscow(date: (statisticService.bestGame.date)))
-    Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy))%
-"""
+    func showNetworkError(message: String) {
+        hideLoadingIndicator()
+        
+        let alert = UIAlertController(
+            title: "Ошибка",
+            message: message,
+            preferredStyle: .alert)
+        
+        let action = UIAlertAction(title: "Попробовать ещё раз",
+                                   style: .default) { [weak self] _ in
+            guard let self = self else { return }
             
-            let viewModel = QuizResultsViewModel(
-                title: "Этот раунд окончен!",
-                text: message,
-                buttonText: "Сыграть еще раз")
-            show(quiz: viewModel)
-            
-        } else {
-            correctAnswers += 1
-            
-            questionFactory?.requestNextQuestion()
+            self.presenter.restartGame()
         }
-    }
-    
-    private func dateConverterMoscow(date: Date) -> String {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "dd.MM.yyyy HH:mm:ss"
-        dateFormatter.timeZone = TimeZone(identifier: "Europe/Moscow")
-        return dateFormatter.string(from: date)
-    }
-    
-    // MARK: - Сброс цвета рамки на белый
-    
-    private func resetImageViewBorder() {
-        previewImage.layer.borderColor = UIColor.clear.cgColor
-    }
-    
-    // MARK: - Блокирует кнопки после нажатия
-    
-    private func changeStateButton(isEnabled: Bool) {
-        noButton.isEnabled = isEnabled
-        yesButton.isEnabled = isEnabled
+        
+        alert.addAction(action)
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+//
+//
+//    // MARK: - QuestionFactoryDelegate
+//
+//    func didReceiveNextQuestion(question: QuizQuestion?) {
+//        guard let question = question else {
+//            return
+//        }
+//
+//        currentQuestion = question
+//        let viewModel = presenter.convert(model: question)
+//
+//        DispatchQueue.main.async { [weak self] in
+//            self?.show(quiz: viewModel)
+//        }
+//    }
+//
+//    // MARK: - Скрываем индикатор загрузки
+//
+//    func didLoadDataFromServer() {
+//        activityIndicator.isHidden = true
+//        questionFactory?.requestNextQuestion()
+//    }
+//
+//    // MARK: - Возьмём в качестве сообщения описание ошибки
+//
+//    func didFailToLoadData(with error: Error) {
+//        showNetworkError(message: error.localizedDescription)
+//    }
+//
+//
+//
+//    // MARK: - Меняет цвет рамки
+//
+//    func showAnswerResult(isCorrect: Bool) {
+//
+//        yesButton.isEnabled = false
+//        noButton.isEnabled = false
+//
+//        let color: UIColor = isCorrect ? .ypGreen : .ypRed
+//        correctAnswers += isCorrect ? 1 : 0
+//
+//        previewImage.layer.masksToBounds = true
+//        previewImage.layer.borderWidth = 8
+//        previewImage.layer.borderColor = color.cgColor
+//        previewImage.layer.cornerRadius = 20
+//
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+//            guard let self = self else { return }
+//            self.showNextQuestionOrResults()
+//        }
+//    }
+//
+//
+//    // MARK: - Содержит логику перехода в один из сценариев
+//
+//    private func showNextQuestionOrResults() {
+//        previewImage.layer.borderWidth = .zero
+//        if let statisticService = statisticService {
+//            statisticService.store(correct: correctAnswers, total: presenter.questionsAmount)
+//            let message: String = """
+//    Ваш результат: \(correctAnswers)\\\(presenter.questionsAmount)
+//    Колличество сыгранных квизов: \(String(describing: statisticService.gamesCount))
+//    Рекорд: \(String(describing: statisticService.bestGame.correct))/10 \(dateConverterMoscow(date: (statisticService.bestGame.date)))
+//    Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy))%
+//"""
+//
+//            let viewModel = QuizResultsViewModel(
+//                title: "Этот раунд окончен!",
+//                text: message,
+//                buttonText: "Сыграть еще раз")
+//            show(quiz: viewModel)
+//
+//        } else {
+//            correctAnswers += 1
+//
+//            questionFactory?.requestNextQuestion()
+//        }
+//    }
+//
+//    private func dateConverterMoscow(date: Date) -> String {
+//        let dateFormatter = DateFormatter()
+//        dateFormatter.dateFormat = "dd.MM.yyyy HH:mm:ss"
+//        dateFormatter.timeZone = TimeZone(identifier: "Europe/Moscow")
+//        return dateFormatter.string(from: date)
+//    }
+//
+//    // MARK: - Сброс цвета рамки на белый
+//    
+//    private func resetImageViewBorder() {
+//        previewImage.layer.borderColor = UIColor.clear.cgColor
+//    }
+//
+//    // MARK: - Блокирует кнопки после нажатия
+//
+//    private func changeStateButton(isEnabled: Bool) {
+//        noButton.isEnabled = isEnabled
+//        yesButton.isEnabled = isEnabled
+//    }
+//}
