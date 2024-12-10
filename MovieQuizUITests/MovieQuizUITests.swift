@@ -55,7 +55,7 @@ final class MovieQuizUITests: XCTestCase {
         let firstPoster = app.images["Poster"] // находим первоначальный постер
         let firstPosterData = firstPoster.screenshot().pngRepresentation
 
-        app.buttons["No"].tap() // находим кнопку `Да` и нажимаем её
+        app.buttons["No"].tap() // находим кнопку `Нет` и нажимаем её
         sleep(3)
         
         let secondPoster = app.images["Poster"] // ещё раз находим постер
@@ -70,7 +70,7 @@ final class MovieQuizUITests: XCTestCase {
     func testGameFinish() {
         sleep(2)
         for _ in 1...10 {
-            app.buttons["No"].tap()
+            app.buttons["Yes"].tap()
             sleep(2)
         }
 

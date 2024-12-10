@@ -81,6 +81,7 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
             title: result.title,
             message: message,
             preferredStyle: .alert)
+        alert.view.accessibilityIdentifier = "Game results"
         
         let action = UIAlertAction(title: result.buttonText, style: .default) { [weak self] _ in
             guard let self = self else { return }
@@ -142,59 +143,10 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
 
 
 
-//
-//
-//    // MARK: - QuestionFactoryDelegate
-//
-//    func didReceiveNextQuestion(question: QuizQuestion?) {
-//        guard let question = question else {
-//            return
-//        }
-//
-//        currentQuestion = question
-//        let viewModel = presenter.convert(model: question)
-//
-//        DispatchQueue.main.async { [weak self] in
-//            self?.show(quiz: viewModel)
-//        }
-//    }
-//
-//    // MARK: - Скрываем индикатор загрузки
-//
-//    func didLoadDataFromServer() {
-//        activityIndicator.isHidden = true
-//        questionFactory?.requestNextQuestion()
-//    }
-//
-//    // MARK: - Возьмём в качестве сообщения описание ошибки
-//
-//    func didFailToLoadData(with error: Error) {
-//        showNetworkError(message: error.localizedDescription)
-//    }
-//
-//
-//
-//    // MARK: - Меняет цвет рамки
-//
-//    func showAnswerResult(isCorrect: Bool) {
-//
-//        yesButton.isEnabled = false
-//        noButton.isEnabled = false
-//
-//        let color: UIColor = isCorrect ? .ypGreen : .ypRed
-//        correctAnswers += isCorrect ? 1 : 0
-//
-//        previewImage.layer.masksToBounds = true
-//        previewImage.layer.borderWidth = 8
-//        previewImage.layer.borderColor = color.cgColor
-//        previewImage.layer.cornerRadius = 20
-//
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-//            guard let self = self else { return }
-//            self.showNextQuestionOrResults()
-//        }
-//    }
-//
+
+
+
+
 //
 //    // MARK: - Содержит логику перехода в один из сценариев
 //
