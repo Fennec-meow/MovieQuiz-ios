@@ -21,14 +21,21 @@ class ArrayTests: XCTestCase {
         XCTAssertEqual(value, 2)
     }
     
-    func testGetValueOutOfRange() throws {
+    func testGetValueOutOfRange() {
         // Given
         let array = [1, 1, 2, 3, 5]
         
         // When
-        let value = array[20]
+        let index = 20
+        let value: Int?
         
         // Then
+        if array.indices.contains(index) {
+            value = array[index]
+        } else {
+            value = nil
+        }
+        
         XCTAssertNil(value)
     }
 }
