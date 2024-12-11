@@ -98,11 +98,4 @@ final class MovieQuizUITests: XCTestCase {
         XCTAssertFalse(alert.exists)
         XCTAssertTrue(indexLabel.label == "1/10")
     }
-    
-    @MainActor
-    func testExample() throws {
-        let app = XCUIApplication()
-        app.launch()
-        
-    }
 }
