@@ -9,7 +9,7 @@ import Foundation
 
 // MARK: - Для состояния "Результат квиза"
 
- struct QuizResultsViewModel {
+struct QuizResultsViewModel {
     let title: String
     let text: String
     let buttonText: String
