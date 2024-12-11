@@ -24,7 +24,7 @@ final class AlertPresenter {
             message: alertMobel.message,
             preferredStyle: .alert)
         alert.view.accessibilityIdentifier = "Game results"
-
+        
         
         let action = UIAlertAction(title: alertMobel.buttonText, style: .default) { _ in
             alertMobel.completion()
