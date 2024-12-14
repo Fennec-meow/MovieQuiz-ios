@@ -23,6 +23,8 @@ final class AlertPresenter {
             title: alertMobel.title,
             message: alertMobel.message,
             preferredStyle: .alert)
+        alert.view.accessibilityIdentifier = "Game results"
+        
         
         let action = UIAlertAction(title: alertMobel.buttonText, style: .default) { _ in
             alertMobel.completion()
@@ -32,4 +34,3 @@ final class AlertPresenter {
         delegate?.present(alert, animated: true)
     }
 }
-
